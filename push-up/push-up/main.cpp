@@ -24,7 +24,7 @@ int main()
 	Mat image2 ;
 	//获取摄像头  
 	//CvCapture* capture = cvCreateCameraCapture(0);
-	CvCapture *capture = cvCreateFileCapture("../video/2.mp4");
+	CvCapture *capture = cvCreateFileCapture("../video/7.mp4");
 	IplImage* frame;
 	int count = 0;
 	int sig1 = -1;
@@ -33,12 +33,18 @@ int main()
 	int push_up=0;
 	int push_up_num=0;
 	Mat image;
+	int jump=3;
 	while (1)
 	{
-		for (int i = 0; i < 3; i++)
+		if (1 == sig || 3 == sig)
+		{
+			jump = 1;
+		}
+		for (int i = 0; i < jump; i++)
 		{
 			frame = cvQueryFrame(capture);
 		}
+		jump = 3;
 		frame = cvQueryFrame(capture);
 		Mat Mframe(frame, 0);
 		if (0 == count)
@@ -92,7 +98,8 @@ int main()
 			imageMatches, Scalar(255, 0, 0));
 			*/
 			//	namedWindow("image");
-			imshow("image", image2);
+			//imshow("image1", image1);
+			imshow("image", image1);
 
 
 			//存放符合人体条件的点
@@ -115,7 +122,7 @@ int main()
 			cout << "有效特征：" << body.size() << endl;
 			cout << "sum:" << sum << endl;
 
-			if (100 < sum)
+			if (50 < sum)
 			{
 				switch (sig)
 				{
@@ -146,7 +153,7 @@ int main()
 					break;
 				}
 			}
-			else if (-100 > sum)
+			else if (-50 > sum)
 			{
 				switch (sig)
 				{
@@ -198,7 +205,10 @@ int main()
 					vector<DMatch> matches3;
 					
 					matcher.match(descriptros3, descriptros2, matches3);
-
+					Mat imageMatches;
+					drawMatches(image1, keypoints3, image2, keypoints2, matches3,
+						imageMatches, Scalar(255, 0, 0));
+					//imshow("match", imageMatches);
 					vector<DMatch> body3;
 					double sum3 = 0;
 
@@ -207,7 +217,8 @@ int main()
 						//X3;
 						
 
-						if (((((X3 >= X4) && (X3 - X4)<XTHRE) || ((X3>X4) && (X3 - X4) < XTHRE))) )
+						if (((((X3 >= X4) && (X3 - X4)<XTHRE) || ((X4>X3) && (X4 - X3) < XTHRE))) &&
+							((((Y3 >= Y4) && (Y3 - Y4)<YTHRE) || ((Y4>Y3) && (Y4 - Y3) < YTHRE))))
 						{
 							
 							
@@ -217,20 +228,24 @@ int main()
 
 						}
 					}
-					if (sum3>100 || sum3 < -100)
+					if (sum3>200 || sum3 < -200)
 					{
-						cout << "sum3:" << sum3 << endl;
+						//cout << "sum3:" << sum3 << endl;
 						push_up_num++;
 						//push_up = sig;
-						image = image2.clone();
+						image = image1.clone();
+						//imshow("mat", image);
 					}
+					cout << "sum3:" << sum3 << endl;
 				}	
+				
 			}
 			cout << "sig:" << sig << endl;
 			cout << "sig0:" << sig0 << endl;
 			cout << "sig1:" << sig1 << endl;
+			
 			cout << "俯卧撑个数：" << push_up_num << endl << endl;
-			waitKey(0);
+			waitKey(30);
 		}
 	}
 	
