@@ -7,24 +7,25 @@ using namespace std;
 using namespace cv;
 #define X1 keypoints1.at((matches.at(j).queryIdx)).pt.x
 #define X2 keypoints2.at((matches.at(j).trainIdx)).pt.x
-#define X3 keypoints3.at((matches3.at(j).queryIdx)).pt.x
-#define X4 keypoints2.at((matches3.at(j).trainIdx)).pt.x
+#define X3 keypoints3.at((matches2.at(j).queryIdx)).pt.x
+#define X4 keypoints4.at((matches2.at(j).trainIdx)).pt.x
 
 #define Y1 keypoints1.at((matches.at(j).queryIdx)).pt.y
 #define Y2 keypoints2.at((matches.at(j).trainIdx)).pt.y
-#define Y3 keypoints3.at((matches3.at(j).queryIdx)).pt.y
-#define Y4 keypoints2.at((matches3.at(j).trainIdx)).pt.y
+#define Y3 keypoints3.at((matches2.at(j).queryIdx)).pt.y
+#define Y4 keypoints4.at((matches2.at(j).trainIdx)).pt.y
 #define XTHRE 30
 #define YTHRE 70
 int main()
 {
 	int startNum = 0;
 	int endNum = 5;
-	Mat image1;
-	Mat image2 ;
+	Mat image1;//前一帧
+	Mat image2 ;//当前帧
+	Mat image0;//前两帧
 	//获取摄像头  
 	//CvCapture* capture = cvCreateCameraCapture(0);
-	CvCapture *capture = cvCreateFileCapture("../video/7.mp4");
+	CvCapture *capture = cvCreateFileCapture("../video/5.mp4");
 	IplImage* frame;
 	int count = 0;
 	int sig1 = -1;
@@ -33,6 +34,8 @@ int main()
 	int push_up=0;
 	int push_up_num=0;
 	Mat image;
+	Mat Dimage;
+	Mat Uimage;
 	int jump=3;
 	while (1)
 	{
@@ -52,11 +55,15 @@ int main()
 			resize(Mframe, image1, Size(320, 240));
 			image2 = image1.clone();
 			image = image1.clone();
+			Dimage = image1.clone();
+			Uimage = image1.clone();
+			image0 = image1.clone();
 			count++;
 		}
 		else
 		{
 			//image2.copyTo(image1);
+			image0 = image1.clone();
 			image1 = image2.clone();
 			resize(Mframe, image2, Size(320, 240));
 		}
@@ -99,12 +106,12 @@ int main()
 			*/
 			//	namedWindow("image");
 			//imshow("image1", image1);
-			imshow("image", image1);
+			imshow("image", image0);
 
 
 			//存放符合人体条件的点
 			vector<DMatch> body;
-			double sum = 0;
+			int sum = 0;
 			for (int j = 0; j < matches.size(); j++)
 			{
 				if (((((X1 >= X2) && (X1 - X2)<XTHRE) || ((X2>X1) && (X2 - X1) < XTHRE))) &&
@@ -122,7 +129,7 @@ int main()
 			cout << "有效特征：" << body.size() << endl;
 			cout << "sum:" << sum << endl;
 
-			if (50 < sum)
+			if (0 < sum)
 			{
 				switch (sig)
 				{
@@ -132,120 +139,164 @@ int main()
 					sig = 3;
 					break;
 				case 1:
-					sig1 = sig0;
-					sig0 = sig;
-					sig = 3;
-					break;
-				case 2:
-					sig1 = sig0;
-					sig0 = sig;
-					sig = 3;
-					break;
-				case 3:
-					sig1 = sig0;
-					sig0 = sig;
-					sig = 4;
-					break;
-				case 4:
-					sig1 = sig0;
-					sig0 = sig;
-					sig = 4;
-					break;
-				}
-			}
-			else if (-50 > sum)
-			{
-				switch (sig)
-				{
-				case 0:
-					sig1 = sig0;
-					sig0 = sig;
-					sig = 1;
-					break;
-				case 1:
-					sig1 = sig0;
-					sig0 = sig;
-					sig = 2;
-					break;
-				case 2:
-					sig1 = sig0;
-					sig0 = sig;
-					sig = 2;
-					break;
-				case 3:
-					sig1 = sig0;
-					sig0 = sig;
-					sig = 1;
-					break;
-				case 4:
-					sig1 = sig0;
-					sig0 = sig;
-					sig = 1;
-				}
-			}
-			if (( ((4 == sig)&&((2==sig1)||0==sig1)) || ((2 == sig))&&(4==sig1||0==sig1)) /*&& (sig != push_up)*/)
-			{
-				// 检测surf特征点
-				vector<KeyPoint> keypoints3;
-				SurfFeatureDetector detector3(400);
-				detector3.detect(image, keypoints3);
-				
 
-				if (keypoints3.size() > 0)
+					sig1 = sig0;
+					sig0 = sig;
+					sig = 3;
+					break;
+				case 2:
+					sig1 = sig0;
+					sig0 = sig;
+					sig = 3;
+					break;
+				case 3:
+					sig1 = sig0;
+					sig0 = sig;
+					sig = 4;
+					break;
+				case 4:
+					sig1 = sig0;
+					sig0 = sig;
+					sig = 4;
+					break;
+				}
+			}
+			else if (0 > sum)
+			{
+				switch (sig)
+				{
+				case 0:
+					sig1 = sig0;
+					sig0 = sig;
+					sig = 1;
+					break;
+				case 1:
+					sig1 = sig0;
+					sig0 = sig;
+					sig = 2;
+					break;
+				case 2:
+					sig1 = sig0;
+					sig0 = sig;
+					sig = 2;
+					break;
+				case 3:
+					sig1 = sig0;
+					sig0 = sig;
+					sig = 1;
+					break;
+				case 4:
+					sig1 = sig0;
+					sig0 = sig;
+					sig = 1;
+				}
+			}
+			//最低点
+			if (( ((4 == sig)&&((2==sig1)||0==sig1)) ))
+			{
+
+
+				vector<KeyPoint> keypoints3, keypoints4;
+				SurfFeatureDetector detector(400);
+				detector.detect(Uimage, keypoints3);
+				detector.detect(image0, keypoints4);
+
+				if (keypoints3.size() > 0 && keypoints4.size() > 0)
 				{
 					// 描述surf特征点
-					SurfDescriptorExtractor surfDesc3;
-					Mat descriptros3;
-					surfDesc3.compute(image, keypoints3, descriptros3);
-					
-					//imshow("descriptros1", descriptros1);
-					//imshow("descriptros2", descriptros2);
+					SurfDescriptorExtractor surfDesc2;
+					Mat descriptros3, descriptros4;
+					surfDesc2.compute(Uimage, keypoints3, descriptros3);
+					surfDesc2.compute(image0, keypoints4, descriptros4);
+
 					// 计算匹配点数
-					BruteForceMatcher<L2<float>>matcher3;
-					vector<DMatch> matches3;
-					
-					matcher.match(descriptros3, descriptros2, matches3);
-					Mat imageMatches;
-					drawMatches(image1, keypoints3, image2, keypoints2, matches3,
-						imageMatches, Scalar(255, 0, 0));
-					//imshow("match", imageMatches);
-					vector<DMatch> body3;
-					double sum3 = 0;
+					BruteForceMatcher<L2<float>>matcher2;
+					vector<DMatch> matches2;
 
-					for (int j = 0; j < matches3.size(); j++)
+					matcher2.match(descriptros3, descriptros4, matches2);
+					//存放符合人体条件的点
+					vector<DMatch> body2;
+					int sum2 = 0;
+					for (int j = 0; j < matches2.size(); j++)
 					{
-						//X3;
-						
-
-						if (((((X3 >= X4) && (X3 - X4)<XTHRE) || ((X4>X3) && (X4 - X3) < XTHRE))) &&
+						if (((((X3 >= X4) && (X4 - X3)<XTHRE) || ((X4>X3) && (X4 - X3) < XTHRE))) &&
 							((((Y3 >= Y4) && (Y3 - Y4)<YTHRE) || ((Y4>Y3) && (Y4 - Y3) < YTHRE))))
 						{
-							
-							
-							body3.push_back(matches3.at(j));
-							sum3 += Y3 - Y4;
-							//cout << "Y3:" << Y3 << " Y4:" << Y4 << " sum3:" << sum3 << endl;
-
+							body.push_back(matches2.at(j));
+							sum2 += Y3 - Y4;
 						}
 					}
-					if (sum3>200 || sum3 < -200)
+					if (sum2 <-100)
 					{
 						//cout << "sum3:" << sum3 << endl;
 						push_up_num++;
 						//push_up = sig;
-						image = image1.clone();
-						//imshow("mat", image);
+						Dimage = image0.clone();
+						if (0 == push_up_num % 2)
+						{
+							push_up_num++;
+						}
+						imshow("Dimage", Dimage);
 					}
-					cout << "sum3:" << sum3 << endl;
-				}	
-				
+					cout << "sum2:" << sum2 << endl;
+				}
+			}
+
+			//最高点
+			else if (((2 == sig)) && (4 == sig1 || 0 == sig1))
+			{
+				vector<KeyPoint> keypoints3, keypoints4;
+				SurfFeatureDetector detector(400);
+				detector.detect(Dimage, keypoints3);
+				detector.detect(image0, keypoints4);
+
+				if (keypoints3.size() > 0 && keypoints4.size() > 0)
+				{
+					// 描述surf特征点
+					SurfDescriptorExtractor surfDesc2;
+					Mat descriptros3, descriptros4;
+					surfDesc2.compute(Dimage, keypoints3, descriptros3);
+					surfDesc2.compute(image0, keypoints4, descriptros4);
+
+					// 计算匹配点数
+					BruteForceMatcher<L2<float>>matcher2;
+					vector<DMatch> matches2;
+
+					matcher2.match(descriptros3, descriptros4, matches2);
+					//存放符合人体条件的点
+					vector<DMatch> body2;
+					int sum2 = 0;
+					for (int j = 0; j < matches2.size(); j++)
+					{
+						if (((((X3 >= X4) && (X4 - X3)<XTHRE) || ((X4>X3) && (X4 - X3) < XTHRE))) &&
+							((((Y3 >= Y4) && (Y3 - Y4)<YTHRE) || ((Y4>Y3) && (Y4 - Y3) < YTHRE))))
+						{
+							body.push_back(matches2.at(j));
+							sum2 += Y3 - Y4;
+						}
+					}
+					if (sum2 >100)
+					{
+						//cout << "sum3:" << sum3 << endl;
+						
+						push_up_num++;
+						//push_up = sig;
+						Uimage = image0.clone();
+						imshow("Uimage", Uimage);
+						if (1 == push_up_num % 2)
+						{
+							push_up_num++;
+						}
+					}
+					cout << "sum2:" << sum2 << endl;
+				}
 			}
 			cout << "sig:" << sig << endl;
 			cout << "sig0:" << sig0 << endl;
 			cout << "sig1:" << sig1 << endl;
 			
 			cout << "俯卧撑个数：" << push_up_num << endl << endl;
-			waitKey(30);
+			waitKey(0);
 		}
 	}
 	
