@@ -28,7 +28,7 @@ int main()
 	Mat image0;//前两帧
 	//获取摄像头  
 	//CvCapture* capture = cvCreateCameraCapture(0);
-	CvCapture *capture = cvCreateFileCapture("../video/10.mp4");
+	CvCapture *capture = cvCreateFileCapture("../video/8.mp4");
 	IplImage* frame;
 	int count = 0;
 	int sig1 = -1;
@@ -40,6 +40,7 @@ int main()
 	Mat Dimage;
 	Mat Uimage;
 	int jump=0;
+
 	enum Action{
 		top,up,down,bottom
 	};
@@ -64,6 +65,8 @@ int main()
 		{
 			resize(Mframe, image2, Size(320, 240));
 			image1 = image2.clone();
+			image0 = image1.clone();
+		
 			/*
 			image = image1.clone();
 			Dimage = image1.clone();
@@ -152,31 +155,93 @@ int main()
 
 			if (ave < DAVE && (top == action))
 			{
+				image0 = image1.clone();
 				image1 = image2.clone();
 				lastAction = action;
 				action = down;
 				//push_up_num++;
 			}
-			if (ave < DAVE && (up == action))
+
+			if (ave < DAVE && up == action)
 			{
-				image1 = image2.clone();
-				lastAction = action;
-				action = down;
-				push_up_num++;
+				if (1 == push_up)
+				{
+					image0 = image1.clone();
+					image1 = image2.clone();
+					lastAction = action;
+					action = down;
+					push_up = 0;
+				}
+				else
+				{
+					image0 = image1.clone();
+					image1 = image2.clone();
+					lastAction = action;
+					action = down;
+					push_up_num++;
+				}
+					
 			}
 			if (ave < DAVE &&down == action)
 			{
+				image0 = image1.clone();
 				image1 = image2.clone();
 			}
 			if (ave > UAVE)
 			{
+				image0 = image1.clone();
 				image1 = image2.clone();
 				lastAction = action;
 				action = up;
 			}
 			if (up == action&&down == lastAction)
 			{
-				image = image0;
+				image = image0.clone();
+				imshow("image", image);
+			}
+			if (up == action && 0 == push_up)
+			{
+				vector<KeyPoint> keypoints3, keypoints4;
+				SurfFeatureDetector detector(400);
+				detector.detect(image, keypoints3);
+				detector.detect(image2, keypoints4);
+
+				if (keypoints3.size() > 0 && keypoints4.size() > 0)
+				{
+					// 描述surf特征点
+					SurfDescriptorExtractor surfDesc2;
+					Mat descriptros3, descriptros4;
+					surfDesc2.compute(image, keypoints3, descriptros3);
+					surfDesc2.compute(image2, keypoints4, descriptros4);
+
+					// 计算匹配点数
+					BruteForceMatcher<L2<float>>matcher2;
+					vector<DMatch> matches2;
+
+					matcher2.match(descriptros3, descriptros4, matches2);
+					//存放符合人体条件的点
+					vector<DMatch> body2;
+					double sum2 = 0;
+					double ave2 = 0;
+					int pcount2 = 0;
+					for (int j = 0; j < matches2.size(); j++)
+					{
+						if (((((X3 >= X4) && (X4 - X3)<XTHRE) || ((X4>X3) && (X4 - X3) < XTHRE))) &&
+							((((Y3 >= Y4) && (Y3 - Y4)<YTHRE) || ((Y4>Y3) && (Y4 - Y3) < YTHRE))))
+						{
+							body.push_back(matches2.at(j));
+							sum2 += Y3 - Y4;
+							pcount2++;
+						}
+					}
+					ave2 = sum2 / pcount2;
+					if (ave2>3)
+					{
+						cout << "ave2" << ave2 << endl;
+						push_up_num++;
+						push_up = 1;
+					}
+				}
 			}
 			cout << "ave:" << ave << endl;
 			cout << action << endl;
