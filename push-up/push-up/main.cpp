@@ -3,6 +3,7 @@
 #include <opencv2/nonfree/features2d.hpp>
 #include <opencv2/legacy/legacy.hpp>
 #include <iostream>
+
 using namespace std;
 using namespace cv;
 #define X1 keypoints1.at((matches.at(j).queryIdx)).pt.x
@@ -16,6 +17,8 @@ using namespace cv;
 #define Y4 keypoints4.at((matches2.at(j).trainIdx)).pt.y
 #define XTHRE 30
 #define YTHRE 70
+#define UAVE 3
+#define DAVE -3
 int main()
 {
 	int startNum = 0;
@@ -25,7 +28,7 @@ int main()
 	Mat image0;//前两帧
 	//获取摄像头  
 	//CvCapture* capture = cvCreateCameraCapture(0);
-	CvCapture *capture = cvCreateFileCapture("../video/5.mp4");
+	CvCapture *capture = cvCreateFileCapture("../video/10.mp4");
 	IplImage* frame;
 	int count = 0;
 	int sig1 = -1;
@@ -36,38 +39,55 @@ int main()
 	Mat image;
 	Mat Dimage;
 	Mat Uimage;
-	int jump=3;
+	int jump=0;
+	enum Action{
+		top,up,down,bottom
+	};
+	Action action=top;
+	Action lastAction = action;
 	while (1)
 	{
+		/*
 		if (1 == sig || 3 == sig)
 		{
-			jump = 1;
+		jump = 1;
 		}
+		*/
 		for (int i = 0; i < jump; i++)
 		{
 			frame = cvQueryFrame(capture);
 		}
-		jump = 3;
+		//jump = 3;
 		frame = cvQueryFrame(capture);
 		Mat Mframe(frame, 0);
 		if (0 == count)
 		{
-			resize(Mframe, image1, Size(320, 240));
-			image2 = image1.clone();
+			resize(Mframe, image2, Size(320, 240));
+			image1 = image2.clone();
+			/*
 			image = image1.clone();
 			Dimage = image1.clone();
 			Uimage = image1.clone();
 			image0 = image1.clone();
+			*/
+			
+			//image2 = image1.clone();
+			
 			count++;
 		}
 		else
+		{
+			resize(Mframe, image2, Size(320, 240));
+		}
+		
+		/*else
 		{
 			//image2.copyTo(image1);
 			image0 = image1.clone();
 			image1 = image2.clone();
 			resize(Mframe, image2, Size(320, 240));
 		}
-		
+		*/
 
 		// 检测surf特征点
 		vector<KeyPoint> keypoints1, keypoints2;
@@ -106,12 +126,14 @@ int main()
 			*/
 			//	namedWindow("image");
 			//imshow("image1", image1);
-			imshow("image", image0);
-
+			imshow("一帧前", image1);
+			imshow("当前帧", image2);
 
 			//存放符合人体条件的点
 			vector<DMatch> body;
-			int sum = 0;
+			double sum = 0;
+			int pointCount = 0;//有效点的个数
+			double ave = 0;//平均有效距离
 			for (int j = 0; j < matches.size(); j++)
 			{
 				if (((((X1 >= X2) && (X1 - X2)<XTHRE) || ((X2>X1) && (X2 - X1) < XTHRE))) &&
@@ -119,16 +141,62 @@ int main()
 				{
 					body.push_back(matches.at(j));
 					sum += Y1 - Y2;
-				}
-				else
-				{
-					//cout << "X1:" << X1 << " X2:" << X2 << endl;
+					pointCount++;
 				}
 			}
-			cout << "特征总数：" << matches.size() << endl;
-			cout << "有效特征：" << body.size() << endl;
+			ave = sum / pointCount;
+
+			//cout << "特征总数：" << matches.size() << endl;
+			//cout << "有效特征：" << body.size() << endl;
 			cout << "sum:" << sum << endl;
 
+			if (ave < DAVE && (top == action))
+			{
+				image1 = image2.clone();
+				lastAction = action;
+				action = down;
+				//push_up_num++;
+			}
+			if (ave < DAVE && (up == action))
+			{
+				image1 = image2.clone();
+				lastAction = action;
+				action = down;
+				push_up_num++;
+			}
+			if (ave < DAVE &&down == action)
+			{
+				image1 = image2.clone();
+			}
+			if (ave > UAVE)
+			{
+				image1 = image2.clone();
+				lastAction = action;
+				action = up;
+			}
+			if (up == action&&down == lastAction)
+			{
+				image = image0;
+			}
+			cout << "ave:" << ave << endl;
+			cout << action << endl;
+		}
+		
+
+		cout << "俯卧撑个数：" << push_up_num << endl << endl;
+		waitKey(30);
+	}
+
+
+	
+
+
+
+
+
+
+
+			/*
 			if (0 < sum)
 			{
 				switch (sig)
@@ -296,9 +364,9 @@ int main()
 			cout << "sig1:" << sig1 << endl;
 			
 			cout << "俯卧撑个数：" << push_up_num << endl << endl;
-			waitKey(0);
+			waitKey(30);
 		}
 	}
-	
+	*/
 	return 0;
 }
