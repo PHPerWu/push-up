@@ -28,37 +28,23 @@ int main()
 	Mat image0;//前两帧
 	//获取摄像头  
 	//CvCapture* capture = cvCreateCameraCapture(0);
-	CvCapture *capture = cvCreateFileCapture("../video/8.mp4");
+	CvCapture *capture = cvCreateFileCapture("../video/2.mp4");
 	IplImage* frame;
 	int count = 0;
-	int sig1 = -1;
-	int sig0 = 0;
-	int sig = 0;
+
 	int push_up=0;
 	int push_up_num=0;
 	Mat image;
-	Mat Dimage;
-	Mat Uimage;
-	int jump=0;
 
 	enum Action{
-		top,up,down,bottom
+		top,up,down
 	};
 	Action action=top;
 	Action lastAction = action;
 	while (1)
 	{
-		/*
-		if (1 == sig || 3 == sig)
-		{
-		jump = 1;
-		}
-		*/
-		for (int i = 0; i < jump; i++)
-		{
-			frame = cvQueryFrame(capture);
-		}
-		//jump = 3;
+
+		
 		frame = cvQueryFrame(capture);
 		Mat Mframe(frame, 0);
 		if (0 == count)
@@ -261,177 +247,6 @@ int main()
 
 
 
-			/*
-			if (0 < sum)
-			{
-				switch (sig)
-				{
-				case 0:
-					sig1 = sig0;
-					sig0 = sig;
-					sig = 3;
-					break;
-				case 1:
-
-					sig1 = sig0;
-					sig0 = sig;
-					sig = 3;
-					break;
-				case 2:
-					sig1 = sig0;
-					sig0 = sig;
-					sig = 3;
-					break;
-				case 3:
-					sig1 = sig0;
-					sig0 = sig;
-					sig = 4;
-					break;
-				case 4:
-					sig1 = sig0;
-					sig0 = sig;
-					sig = 4;
-					break;
-				}
-			}
-			else if (0 > sum)
-			{
-				switch (sig)
-				{
-				case 0:
-					sig1 = sig0;
-					sig0 = sig;
-					sig = 1;
-					break;
-				case 1:
-					sig1 = sig0;
-					sig0 = sig;
-					sig = 2;
-					break;
-				case 2:
-					sig1 = sig0;
-					sig0 = sig;
-					sig = 2;
-					break;
-				case 3:
-					sig1 = sig0;
-					sig0 = sig;
-					sig = 1;
-					break;
-				case 4:
-					sig1 = sig0;
-					sig0 = sig;
-					sig = 1;
-				}
-			}
-			//最低点
-			if (( ((4 == sig)&&((2==sig1)||0==sig1)) ))
-			{
-
-
-				vector<KeyPoint> keypoints3, keypoints4;
-				SurfFeatureDetector detector(400);
-				detector.detect(Uimage, keypoints3);
-				detector.detect(image0, keypoints4);
-
-				if (keypoints3.size() > 0 && keypoints4.size() > 0)
-				{
-					// 描述surf特征点
-					SurfDescriptorExtractor surfDesc2;
-					Mat descriptros3, descriptros4;
-					surfDesc2.compute(Uimage, keypoints3, descriptros3);
-					surfDesc2.compute(image0, keypoints4, descriptros4);
-
-					// 计算匹配点数
-					BruteForceMatcher<L2<float>>matcher2;
-					vector<DMatch> matches2;
-
-					matcher2.match(descriptros3, descriptros4, matches2);
-					//存放符合人体条件的点
-					vector<DMatch> body2;
-					int sum2 = 0;
-					for (int j = 0; j < matches2.size(); j++)
-					{
-						if (((((X3 >= X4) && (X4 - X3)<XTHRE) || ((X4>X3) && (X4 - X3) < XTHRE))) &&
-							((((Y3 >= Y4) && (Y3 - Y4)<YTHRE) || ((Y4>Y3) && (Y4 - Y3) < YTHRE))))
-						{
-							body.push_back(matches2.at(j));
-							sum2 += Y3 - Y4;
-						}
-					}
-					if (sum2 <-100)
-					{
-						//cout << "sum3:" << sum3 << endl;
-						push_up_num++;
-						//push_up = sig;
-						Dimage = image0.clone();
-						if (0 == push_up_num % 2)
-						{
-							push_up_num++;
-						}
-						imshow("Dimage", Dimage);
-					}
-					cout << "sum2:" << sum2 << endl;
-				}
-			}
-
-			//最高点
-			else if (((2 == sig)) && (4 == sig1 || 0 == sig1))
-			{
-				vector<KeyPoint> keypoints3, keypoints4;
-				SurfFeatureDetector detector(400);
-				detector.detect(Dimage, keypoints3);
-				detector.detect(image0, keypoints4);
-
-				if (keypoints3.size() > 0 && keypoints4.size() > 0)
-				{
-					// 描述surf特征点
-					SurfDescriptorExtractor surfDesc2;
-					Mat descriptros3, descriptros4;
-					surfDesc2.compute(Dimage, keypoints3, descriptros3);
-					surfDesc2.compute(image0, keypoints4, descriptros4);
-
-					// 计算匹配点数
-					BruteForceMatcher<L2<float>>matcher2;
-					vector<DMatch> matches2;
-
-					matcher2.match(descriptros3, descriptros4, matches2);
-					//存放符合人体条件的点
-					vector<DMatch> body2;
-					int sum2 = 0;
-					for (int j = 0; j < matches2.size(); j++)
-					{
-						if (((((X3 >= X4) && (X4 - X3)<XTHRE) || ((X4>X3) && (X4 - X3) < XTHRE))) &&
-							((((Y3 >= Y4) && (Y3 - Y4)<YTHRE) || ((Y4>Y3) && (Y4 - Y3) < YTHRE))))
-						{
-							body.push_back(matches2.at(j));
-							sum2 += Y3 - Y4;
-						}
-					}
-					if (sum2 >100)
-					{
-						//cout << "sum3:" << sum3 << endl;
-						
-						push_up_num++;
-						//push_up = sig;
-						Uimage = image0.clone();
-						imshow("Uimage", Uimage);
-						if (1 == push_up_num % 2)
-						{
-							push_up_num++;
-						}
-					}
-					cout << "sum2:" << sum2 << endl;
-				}
-			}
-			cout << "sig:" << sig << endl;
-			cout << "sig0:" << sig0 << endl;
-			cout << "sig1:" << sig1 << endl;
 			
-			cout << "俯卧撑个数：" << push_up_num << endl << endl;
-			waitKey(30);
-		}
-	}
-	*/
 	return 0;
 }
